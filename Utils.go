@@ -46,8 +46,9 @@ func parseDecimal(value interface{}) (decimal.Decimal, error) {
 	switch value.(type) {
 	case string:
 		parsedValue, err = decimal.NewFromString(value.(string))
+		parsedValue = parsedValue.RoundBank(2)
 	case float64:
-		parsedValue = decimal.NewFromFloat(value.(float64))
+		parsedValue = decimal.NewFromFloat(value.(float64)).RoundBank(2)
 	default:
 		return decimal.Zero, errors.New("cannot get decimal value")
 	}

@@ -20,6 +20,15 @@ func unreserveMoney(c *gin.Context) {
 		return
 	}
 
+	var tx *pgx.Tx
+	tx, err = conn.Begin()
+	if err != nil {
+		c.IndentedJSON(http.StatusInternalServerError, "Server error")
+		return
+	}
+
+	defer tx.Rollback()
+
 	var commandTag pgx.CommandTag
 	commandTag, err = changeReservationStatus(userID, orderID, serviceID, price, "canceled")
 	if err != nil {
@@ -34,6 +43,12 @@ func unreserveMoney(c *gin.Context) {
 	newBalance, err = addBalanceToUser(userID, price)
 	if err != nil {
 		c.IndentedJSON(http.StatusInternalServerError, "Server error "+err.Error())
+		return
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		c.IndentedJSON(http.StatusInternalServerError, "Server error")
 		return
 	}
 

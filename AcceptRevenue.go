@@ -39,5 +39,11 @@ func acceptRevenue(c *gin.Context) {
 		return
 	}
 
+	err = tx.Commit()
+	if err != nil {
+		c.IndentedJSON(http.StatusInternalServerError, "Server error")
+		return
+	}
+
 	c.IndentedJSON(http.StatusOK, "Successful operation")
 }

@@ -15,20 +15,17 @@ func getUserBalance(userID int64) (decimal.Decimal, bool, error) {
 		return decimal.Zero, false, err
 	}
 
-	var userBalanceString string
+	var userBalanceFloat float64
 	var userBalance decimal.Decimal
 	var balanceExist bool
 
 	if rows.Next() {
-		err = rows.Scan(&userBalanceString)
+		err = rows.Scan(&userBalanceFloat)
 		if err != nil {
 			return decimal.Zero, false, err
 		}
 
-		userBalance, err = decimal.NewFromString(userBalanceString[1:])
-		if err != nil {
-			return decimal.Zero, false, err
-		}
+		userBalance = decimal.NewFromFloat(userBalanceFloat).RoundBank(2)
 
 		balanceExist = true
 	} else {
@@ -89,7 +86,7 @@ func addBalanceToUser(userID int64, amount decimal.Decimal) (decimal.Decimal, er
 
 func addBalanceAddition(userID int64, amount decimal.Decimal) (pgx.CommandTag, error) {
 	query := fmt.Sprintf(
-		"INSERT INTO balance_additions(user_id, Amount, addition_date) values (%d, %s, CURRENT_DATE)",
+		"INSERT INTO balance_additions(user_id, amount, addition_date) values (%d, %s, CURRENT_DATE)",
 		userID,
 		amount.String())
 	return conn.Exec(query)

@@ -73,7 +73,7 @@ func getReport(c *gin.Context) {
 	downloadPath = "/downloadReport/" + hashedTime
 
 	c.IndentedJSON(http.StatusOK, map[string]interface{}{
-		"downloadLink": routerAddr + downloadPath})
+		"downloadLink": "http://localhost" + downloadPath})
 
 	router.GET(downloadPath, func(c *gin.Context) {
 
@@ -95,8 +95,6 @@ func getReport(c *gin.Context) {
 			c.IndentedJSON(http.StatusInternalServerError, "Server error "+err.Error())
 			return
 		}
-
-		c.JSON(http.StatusOK, "Successful operation")
 	})
 }
 

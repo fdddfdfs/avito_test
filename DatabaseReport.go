@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/jackc/pgx/pgtype"
+	"github.com/shopspring/decimal"
 	"time"
 )
 
@@ -20,12 +21,17 @@ func getAllBalanceTransactions(userID int64) ([]Transaction, error) {
 	var serviceIDs []int64
 	var amounts []string
 	var dates []string
-	serviceIDs, amounts, dates, err = getAllBalanceReservations(userID, []string{"processed", "reserved"})
+	serviceIDs, amounts, dates, err = getAllBalanceReservations(userID, []string{"processed", "reserved", "canceled"})
 	if err != nil {
 		return nil, err
 	}
 
-	reservationTransactions := getTransactions(serviceIDs, amounts, dates)
+	reservationTransactions := getTransactions(
+		serviceIDs,
+		amounts,
+		dates,
+		"write-off",
+		"write-off for service named-")
 	transactions = append(transactions, reservationTransactions...)
 
 	serviceIDs, amounts, dates, err = getAllBalanceReservations(userID, []string{"canceled"})
@@ -33,7 +39,12 @@ func getAllBalanceTransactions(userID int64) ([]Transaction, error) {
 		return nil, err
 	}
 
-	canceledTransactions := getTransactions(serviceIDs, amounts, dates)
+	canceledTransactions := getTransactions(
+		serviceIDs,
+		amounts,
+		dates,
+		"top-up",
+		"top-up for cancel service named-")
 	transactions = append(transactions, canceledTransactions...)
 
 	return transactions, nil
@@ -48,7 +59,8 @@ func getAllBalanceAdditions(userID int64) ([]Transaction, error) {
 		return nil, err
 	}
 
-	var amount string
+	var amount float64
+	var amountString string
 	var date pgtype.Date
 	var year, day int
 	var month time.Month
@@ -60,11 +72,11 @@ func getAllBalanceAdditions(userID int64) ([]Transaction, error) {
 		}
 
 		year, month, day = date.Time.Date()
-
+		amountString = decimal.NewFromFloat(amount).RoundBank(2).String()
 		transactions = append(
 			transactions,
 			Transaction{
-				Amount:          amount[1:],
+				Amount:          amountString,
 				Date:            fmt.Sprintf("%d-%d-%d", year, int(month), day),
 				TransactionType: "top-up",
 				Commentary:      "balance top-up"})
@@ -103,7 +115,7 @@ func getAllBalanceReservations(userID int64, statuses []string) ([]int64, []stri
 	}
 
 	var serviceID int64
-	var amount string
+	var amount float64
 	var date pgtype.Date
 
 	var serviceIDs []int64
@@ -118,7 +130,7 @@ func getAllBalanceReservations(userID int64, statuses []string) ([]int64, []stri
 			return nil, nil, nil, err
 		}
 		serviceIDs = append(serviceIDs, serviceID)
-		amounts = append(amounts, amount[1:])
+		amounts = append(amounts, decimal.NewFromFloat(amount).String())
 		year, month, day = date.Time.Date()
 		dates = append(dates, fmt.Sprintf("%d-%d-%d", year, int(month), day))
 	}
@@ -126,7 +138,12 @@ func getAllBalanceReservations(userID int64, statuses []string) ([]int64, []stri
 	return serviceIDs, amounts, dates, nil
 }
 
-func getTransactions(serviceIDs []int64, amounts []string, dates []string) []Transaction {
+func getTransactions(
+	serviceIDs []int64,
+	amounts []string,
+	dates []string,
+	transactionType string,
+	commentary string) []Transaction {
 	var transactions []Transaction
 	var serviceName string
 	var err error
@@ -141,8 +158,8 @@ func getTransactions(serviceIDs []int64, amounts []string, dates []string) []Tra
 			Transaction{
 				Amount:          amounts[i],
 				Date:            dates[i],
-				TransactionType: "write-off",
-				Commentary:      "write off for service named- " + serviceName})
+				TransactionType: transactionType,
+				Commentary:      commentary + serviceName})
 	}
 	return transactions
 }
@@ -172,17 +189,16 @@ func getReportForPeriod(year int64, month int64) ([]ServiceIDRevenue, error) {
 	}
 
 	var serviceID int64
-	var serviceRevenueString string
+	var serviceRevenue float64
 	var report []ServiceIDRevenue
 	for rows.Next() {
-		err = rows.Scan(&serviceID, &serviceRevenueString)
+		err = rows.Scan(&serviceID, &serviceRevenue)
 		if err != nil {
 			return nil, err
 		}
 
-		report = append(report, ServiceIDRevenue{serviceID, serviceRevenueString[1:]})
+		report = append(report, ServiceIDRevenue{serviceID, decimal.NewFromFloat(serviceRevenue).String()})
 	}
 
 	return report, nil
-
 }

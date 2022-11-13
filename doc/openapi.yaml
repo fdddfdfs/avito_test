@@ -2,7 +2,7 @@ openapi: 3.0.3
 info:
   title: Balance API
   description: |-
-    Avito test made by Vsevolod machine Vasilev
+    Avito backend internship test task made by Vsevolod Vasilev
   version: 1.0.0
 servers:
   - url: http://localhost/
@@ -113,7 +113,7 @@ paths:
       summary: cancel reservation
       description: cancel reservation and refund
       requestBody:
-        description: accept reservation
+        description: cancel reservation and refund
         content:
           application/json:
             schema:
@@ -172,14 +172,14 @@ paths:
       parameters:
         - name: userID
           in: path
-          description: year for report
+          description: userID for report
           required: true
           schema:
             type: integer
             format: uint64
         - name: page
           in: path
-          description: month for report
+          description: page to show
           required: true
           schema:
             type: integer
