@@ -6,7 +6,7 @@ git clone https://github.com/fdddfdfs/avito_test
 ```
 ## Build
 ```sh
-docker build --tag  avitotest-avitotest ./ 
+docker build --tag avitotest-avitotest ./ 
 ```
 
 ## Run
