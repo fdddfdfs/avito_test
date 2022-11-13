@@ -13,3 +13,6 @@ docker build --tag avitotest-avitotest ./
 ```sh
 docker compose up
 ```
+
+## Using
+Open localhost:3200
