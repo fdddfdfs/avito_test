@@ -1,0 +1,52 @@
+services:
+  avitotest:
+    depends_on:
+      - pgdatabase
+    build:
+      context: ./
+      dockerfile: Dockerfile
+    container_name: rest-server
+    hostname: rest-server
+    networks:
+      - mynet
+    ports:
+      - "80:8080"
+    deploy:
+      restart_policy:
+        condition: on-failure
+  pgdatabase:
+    image: postgres:13
+    environment:
+      - POSTGRES_USER=root
+      - POSTGRES_PASSWORD=root
+      - POSTGRES_DB=avito_test
+    volumes:
+      - "./avito_test_data:/var/lib/postgresql/data:rw"
+    ports:
+      - "5432:5432"
+    networks:
+      - mynet
+  pgadmin:
+    image: dpage/pgadmin4
+    environment:
+      - PGADMIN_DEFAULT_EMAIL=admin@admin.com
+      - PGADMIN_DEFAULT_PASSWORD=root
+    ports:
+      - "8080:80"
+    networks:
+      - mynet
+  swagger-ui:
+    image: swaggerapi/swagger-ui
+    container_name: swagger_ui_container
+    ports:
+      - "3200:3200"
+    volumes:
+      - ./doc:/usr/share/nginx/html/doc
+    environment:
+      API_URL: doc/openapi.yaml
+      PORT: 3200
+volumes:
+    pgdatabase:
+networks:
+  mynet:
+    driver: bridge

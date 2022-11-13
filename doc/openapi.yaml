@@ -1,0 +1,283 @@
+openapi: 3.0.3
+info:
+  title: Balance API
+  description: |-
+    Avito test made by Vsevolod machine Vasilev
+  version: 1.0.0
+servers:
+  - url: http://localhost/
+tags:
+  - name: balance
+    description: actions with balances
+  - name: reservation
+    description: actions with reservations
+  - name: report
+    description: actions with reports
+paths:
+  /balance/{userID}:
+    get:
+      tags:
+        - balance
+      summary: get user balance by userID
+      description: get user balance by userID
+      parameters:
+        - name: userID
+          in: path
+          description: ID of user
+          required: true
+          schema:
+            type: integer
+            format: uint64
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Balance'          
+        '400':
+          description: Invalid ID supplied
+        '404':
+          description: Balance not found
+        '500':
+          description: Server error
+  /balance:
+    put:
+      tags:
+        - balance
+      summary: add balance to user
+      description: add balance to user
+      requestBody:
+        description: add balance to user
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Balance'
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Balance'          
+        '400':
+          description: Invalid id/balance supplied
+        '500':
+          description: Server error
+  /reservation:
+    post:
+      tags:
+        - reservation
+      summary: reserve money
+      description: reserve money for service
+      requestBody:
+        description: reserve money for service
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Reserve'
+      responses:
+        '200':
+          description: Successful operation
+        '400':
+          description: Invalid arguments supplied
+        "404":
+          description: User doesn`t exist
+        '500':
+          description: Server error
+  /reservation/accept:
+    put:
+      tags:
+        - reservation
+      summary: accept reservation
+      description: accept reservation
+      requestBody:
+        description: accept reservation
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Reserve'
+      responses:
+        '200':
+          description: Successful operation
+        '400':
+          description: Invalid arguments supplied
+        "404":
+          description: Reservation doesn`t exist
+        '500':
+          description: Server error
+  /reservation/cancel:
+    put:
+      tags:
+        - reservation
+      summary: cancel reservation
+      description: cancel reservation and refund
+      requestBody:
+        description: accept reservation
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Reserve'
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Balance'
+        '400':
+          description: Invalid arguments supplied
+        "404":
+          description: Reservation doesn`t exist
+        '500':
+          description: Server error
+  /report/{year}/{month}:
+    get:
+      tags:
+      - report
+      summary: reports
+      description: reports
+      parameters:
+        - name: year
+          in: path
+          description: year for report
+          required: true
+          schema:
+            type: integer
+            format: uint64
+        - name: month
+          in: path
+          description: month for report
+          required: true
+          schema:
+            type: integer
+            format: uint64
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DownloadPath'          
+        '400':
+          description: Invalid year/month supplied
+        '500':
+          description: Server error
+  /report/transaction/{userID}/{page}/{sort}:
+    get:
+      tags:
+      - report
+      summary: reports
+      description: reports
+      parameters:
+        - name: userID
+          in: path
+          description: year for report
+          required: true
+          schema:
+            type: integer
+            format: uint64
+        - name: page
+          in: path
+          description: month for report
+          required: true
+          schema:
+            type: integer
+            format: uint64
+        - name: sort
+          in: path
+          description: |
+            sort  
+            dd - sort by date in descending order  
+            da - sort by date in ascending  order  
+            pd - sort by date in descending order  
+            pa - sort by date in ascending order
+          required: true
+          schema:
+            type: string
+            enum:
+              - dd
+              - da
+              - pd
+              - pa
+            
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  transactions:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Transaction'
+                  page:
+                    type: integer
+                    format: uint64
+                    example: 1
+        '400':
+          description: Invalid year/month supplied
+        '500':
+          description: Server error
+components:
+  schemas:
+    Balance:
+      type: object
+      properties:
+        userID:
+          type: integer
+          format: uint64
+          example: 10
+        balance:
+          type: string
+          format: string
+          example: 1000.01
+    Reserve:
+      type: object
+      properties:
+        userID:
+          type: integer
+          format: uint64
+          example: 10
+        orderID:
+          type: integer
+          format: uint64
+          example: 10
+        serviceID:
+          type: integer
+          format: uint64
+          example: 10
+        price:
+          type: string
+          format: string
+          example: 1000.01
+    DownloadPath:
+      type: object
+      properties:
+        downloadLink:
+          type: string
+          format: string
+          example: localhost/downloadReport/31838283
+    Transaction:
+      type: object
+      properties:
+        amount:
+          type: string
+          format: string
+          example: 10
+        date:
+          type: string
+          format: string
+          example: 2022-11-10
+        transactionType:
+          type: string
+          enum:
+            - top-up
+            - write-off
+          example: top-up
+        commentary:
+          type: string
+          format: string
+          example: write off for service named - market 
