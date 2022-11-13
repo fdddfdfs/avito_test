@@ -15,4 +15,4 @@ docker compose up
 ```
 
 ## Using
-Open localhost:3200
+Open localhost:3200 for Swagger UI
