@@ -10,7 +10,7 @@ import (
 func acceptRevenue(c *gin.Context) {
 	userID, orderID, serviceID, price, err := getOrderData(c)
 	if err != nil {
-		c.IndentedJSON(http.StatusBadRequest, "Invalid arguments supplied "+err.Error())
+		c.IndentedJSON(http.StatusBadRequest, "Invalid arguments supplied  "+err.Error())
 		return
 	} else if price.LessThan(decimal.Zero) {
 		c.IndentedJSON(http.StatusBadRequest, "Price must be positive")
