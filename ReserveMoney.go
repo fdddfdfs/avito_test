@@ -44,6 +44,15 @@ func reserveMoney(c *gin.Context) {
 		return
 	}
 
+	var tx *pgx.Tx
+	tx, err = conn.Begin()
+	if err != nil {
+		c.IndentedJSON(http.StatusInternalServerError, "Server error")
+		return
+	}
+
+	defer tx.Rollback()
+
 	commandTag, err = addOrder(orderID, serviceID, price)
 	if err != nil {
 		c.IndentedJSON(http.StatusInternalServerError, err.Error())
@@ -56,35 +65,35 @@ func reserveMoney(c *gin.Context) {
 	var orderTableID int64
 	orderTableID, err = getOrderTableID(orderID)
 	if err != nil {
-		_, _ = removeOrder(orderID) // remove created order if error occurs
-
 		c.IndentedJSON(http.StatusInternalServerError, err.Error())
 		return
 	}
 
 	if commandTag, err = updateUserBalance(userID, userBalance.Sub(price)); err != nil {
-		_, _ = removeOrder(orderID) // remove created order if error occurs
-
 		c.IndentedJSON(http.StatusInternalServerError, err.Error())
 		return
 	} else if commandTag.RowsAffected() != 1 {
-		_, _ = removeOrder(orderID) // remove created order if error occurs
-
 		c.IndentedJSON(http.StatusNotFound, errors.New("user doesnt exist"))
 		return
 	}
 
 	if commandTag, err = addReservation(userID, orderTableID, statusID); err != nil {
-		_, _ = removeOrder(orderID)                   // remove created order if error occurs
-		_, _ = updateUserBalance(userID, userBalance) // add removed balance if error occurs
-
 		c.IndentedJSON(http.StatusInternalServerError, "Server error "+err.Error())
 		return
 	} else if commandTag.RowsAffected() != 1 {
-		_, _ = removeOrder(orderID)                   // remove created order if error occurs
-		_, _ = updateUserBalance(userID, userBalance) // add removed balance if error occurs
-
 		c.IndentedJSON(http.StatusBadRequest, "Cannot add reservation")
+		return
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		c.IndentedJSON(http.StatusInternalServerError, "Server error")
+		return
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		c.IndentedJSON(http.StatusInternalServerError, "Server error")
 		return
 	}
 

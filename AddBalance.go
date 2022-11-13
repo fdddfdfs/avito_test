@@ -20,6 +20,15 @@ func addBalance(c *gin.Context) {
 		return
 	}
 
+	var tx *pgx.Tx
+	tx, err = conn.Begin()
+	if err != nil {
+		c.IndentedJSON(http.StatusInternalServerError, "Server error")
+		return
+	}
+
+	defer tx.Rollback()
+
 	var newBalance decimal.Decimal
 	newBalance, err = addBalanceToUser(userID, amount)
 	if err != nil {
@@ -30,14 +39,16 @@ func addBalance(c *gin.Context) {
 	var commandTag pgx.CommandTag
 	commandTag, err = addBalanceAddition(userID, amount)
 	if err != nil {
-		_, _ = updateUserBalance(userID, newBalance.Sub(amount)) // reverse balance if problems with logging happened
-
 		c.IndentedJSON(http.StatusInternalServerError, "Error with logging balance "+err.Error())
 		return
 	} else if commandTag.RowsAffected() != 1 {
-		_, _ = updateUserBalance(userID, newBalance.Sub(amount)) // reverse balance if problems with logging happened
-
 		c.IndentedJSON(http.StatusInternalServerError, "Error with logging balance")
+		return
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		c.IndentedJSON(http.StatusInternalServerError, "Server error")
 		return
 	}
 

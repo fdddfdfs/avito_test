@@ -20,6 +20,15 @@ func acceptRevenue(c *gin.Context) {
 		return
 	}
 
+	var tx *pgx.Tx
+	tx, err = conn.Begin()
+	if err != nil {
+		c.IndentedJSON(http.StatusInternalServerError, "Server error")
+		return
+	}
+
+	defer tx.Rollback()
+
 	var commandTag pgx.CommandTag
 	commandTag, err = changeReservationStatus(userID, orderID, serviceID, price, "processed")
 	if err != nil {

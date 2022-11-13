@@ -33,8 +33,6 @@ func unreserveMoney(c *gin.Context) {
 	var newBalance decimal.Decimal
 	newBalance, err = addBalanceToUser(userID, price)
 	if err != nil {
-		_, _ = changeReservationStatus(userID, orderID, serviceID, price, "reserved") //change status back
-
 		c.IndentedJSON(http.StatusInternalServerError, "Server error "+err.Error())
 		return
 	}
