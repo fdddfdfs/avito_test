@@ -2,6 +2,7 @@
 <project version="4">
   <component name="SqlDialectMappings">
     <file url="file://$APPLICATION_CONFIG_DIR$/consoles/db/4e464bc0-b219-4dfb-b437-41629c04c747/console.sql" dialect="PostgreSQL" />
+    <file url="file://$APPLICATION_CONFIG_DIR$/consoles/db/4e464bc0-b219-4dfb-b437-41629c04c747/console_2.sql" dialect="PostgreSQL" />
     <file url="file://$PROJECT_DIR$/GetBalance.go" dialect="GenericSQL" />
     <file url="file://$PROJECT_DIR$/ReserveMoney.go" dialect="GenericSQL" />
   </component>
